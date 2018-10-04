@@ -1,12 +1,17 @@
 export default function tick(creep: Creep) {
+    let idle = false;
     if (creep.carry.energy < creep.carryCapacity) {
       // console.log("harvest")
       const target = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
       if(target === null){
+        idle = true;
         return;
       }
-      if (creep.pickup(target) === ERR_NOT_IN_RANGE) {
+      const result = creep.pickup(target);
+      if (result === ERR_NOT_IN_RANGE) {
         creep.moveTo(target);
+      } else if(result === OK && creep.carry.energy < creep.carryCapacity){
+        idle = true;
       }
     } else {
       const target = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
@@ -18,4 +23,5 @@ export default function tick(creep: Creep) {
         creep.moveTo(target);
       }
     }
+    //TODO: report idling
   }

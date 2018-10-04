@@ -22,6 +22,7 @@
     "no-empty": {
       "severity": "warning"
     },
-    "comment-format": { "severity": "warning"}
+    "comment-format": { "severity": "warning"},
+    "object-literal-sort-keys": false
   }
 }
