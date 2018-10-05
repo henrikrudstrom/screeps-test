@@ -1,7 +1,8 @@
 import {Kernel} from "./kernel";
+import {Scheduler} from "./scheduler";
 
 export abstract class Process {
-  public priority: number = global.DEFAULT_PRIORITY;
+  public priority: number = Scheduler.DefaultPiority;
   constructor (public pid: number, public name: string, public data: any, public parent: number | null) {
 
   }

@@ -1,42 +1,16 @@
-global.DEFAULT_PRIORITY = 6;
 const MAX_PRIORITY = 16;
 const MAX_PID = 9999999;
 const WALL = 9;
 
-interface ProcessesMemory {
-  index: {[pid: number]: ProcessMemory};
-  running: null | number;
-  completed: number[];
-  queues: number[][];
-  sleep: SleepingProcessesMemory;
-  hitwall: boolean;
-}
-
-interface SleepingProcessesMemory {
-  newProcesses: number[];
-  list: number[];
-  nextCheck: number | null;
-}
-
-interface SchedulerMemory {
-  processes: ProcessesMemory;
-  lastPid: number;
-}
-
-interface ProcessMemory {
-  n: string
-  d: any;
-  p: number | null;
-}
-
-class Scheduler {
+export class Scheduler {
+  public static DefaultPiority: number = 6;
   public memory: SchedulerMemory;
   public processCache: any;
   constructor() {
-    if (!Memory.qos.scheduler) {
-      Memory.qos.scheduler = {};
+    if (!Memory.kernel.scheduler) {
+      Memory.kernel.scheduler = {};
     }
-    this.memory = Memory.qos.scheduler;
+    this.memory = Memory.kernel.scheduler;
 
     this.processCache = {};
     if (!this.memory.processes) {
@@ -303,7 +277,7 @@ class Scheduler {
   public getPriorityForPid (pid: number) : number{
     const program = this.getProcessForPid(pid)
     if (!program.getPriority) {
-      return global.DEFAULT_PRIORITY
+      return Scheduler.DefaultPiority
     }
     const priority = program.getPriority()
     return priority < MAX_PRIORITY ? priority : MAX_PRIORITY

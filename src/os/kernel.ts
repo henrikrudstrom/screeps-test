@@ -1,5 +1,6 @@
 import { Process } from "./process";
-import { Logger } from "./logger";
+import { Scheduler } from "./scheduler";
+import { createLogger } from "os/logger";
 const BUCKET_EMERGENCY = 1000;
 const BUCKET_FLOOR = 2000;
 const BUCKET_CEILING = 9500;
@@ -17,6 +18,8 @@ const GC_HEAP_TRIGGER = 0.85;
 const GLOBAL_LAST_RESET = Game.time;
 const IVM = typeof Game.cpu.getHeapStatistics === "function" && Game.cpu.getHeapStatistics();
 
+const logger = createLogger("kernel")
+
 export class Kernel {
   public static instance: Kernel;
   public scheduler: Scheduler;
@@ -27,12 +30,13 @@ export class Kernel {
   private _cpuLimit: any;
 
   constructor() {
+    if (!Memory.kernel) {
+      Memory.kernel = {};
+    }
     this.scheduler = new Scheduler();
     Kernel.instance = this;
 
-    if (!Memory.qos) {
-      Memory.qos = {};
-    }
+
     this.newglobal = GLOBAL_LAST_RESET === Game.time;
     this.simulation = !!Game.rooms.sim;
     this.scheduler = new Scheduler();
@@ -42,34 +46,34 @@ export class Kernel {
 
   public start(): void {
     if (IVM) {
-      Logger.log(`Initializing Kernel for tick ${Game.time} with IVM support`, LOG_TRACE, "kernel");
+      logger.verbose(`Initializing Kernel for tick ${Game.time} with IVM support`);
     } else {
-      Logger.log(`Initializing Kernel for tick ${Game.time}`, LOG_TRACE, "kernel");
+      logger.verbose(`Initializing Kernel for tick ${Game.time}`);
     }
 
     // Announce new uploads
-    // if (!Memory.qos.script_version || Memory.qos.script_version !== SCRIPT_VERSION) {
+    // if (!Memory.kernel.script_version || Memory.kernel.script_version !== SCRIPT_VERSION) {
     //   Logger.log(`New script upload detected: ${SCRIPT_VERSION}`, LOG_WARN)
-    //   Memory.qos.script_version = SCRIPT_VERSION
-    //   Memory.qos.script_upload = Game.time
+    //   Memory.kernel.script_version = SCRIPT_VERSION
+    //   Memory.kernel.script_upload = Game.time
     //   this.performance.clear()
     // }
 
     if (this.newglobal) {
-      Logger.log(`New Global Detected`, LOG_INFO);
+      logger.info(`New Global Detected`);
     }
 
     if (
       IVM &&
       global.gc &&
-      (!Memory.qos.gc || Game.time - Memory.qos.gc >= MIN_TICKS_BETWEEN_GC) &&
+      (!Memory.kernel.gc || Game.time - Memory.kernel.gc >= MIN_TICKS_BETWEEN_GC) &&
       Game.cpu.getHeapStatistics !== undefined
     ) {
       const heap = Game.cpu.getHeapStatistics() as HeapStatistics;
       const heapPercent = heap.total_heap_size / heap.heap_size_limit;
       if (heapPercent > GC_HEAP_TRIGGER) {
-        Logger.log(`Garbage Collection Initiated`, LOG_INFO, "kernel");
-        Memory.qos.gc = Game.time;
+        logger.info(`Garbage Collection Initiated`);
+        Memory.kernel.gc = Game.time;
         global.gc();
       }
     }
@@ -94,7 +98,7 @@ export class Kernel {
   }
 
   public cleanMemory() {
-    Logger.log("Cleaning memory", LOG_TRACE, "kernel");
+    logger.verbose("Cleaning memory");
     let i;
     for (i in Memory.creeps) {
       // jshint ignore:line
@@ -112,7 +116,6 @@ export class Kernel {
       if (!runningProcess) {
         return
       }
-      Logger.defaultLogGroup = runningProcess.name
       try {
         let processName = runningProcess.name
         const descriptor = runningProcess.getDescriptor()
@@ -120,7 +123,7 @@ export class Kernel {
           processName += ' ' + descriptor
         }
 
-        Logger.log(`Running ${processName} (pid ${runningProcess.pid})`, LOG_TRACE, 'kernel')
+        logger.verbose(`Running ${processName} (pid ${runningProcess.pid})`)
         const startCpu = Game.cpu.getUsed()
         runningProcess.run()
         let performanceName = runningProcess.name
@@ -133,15 +136,14 @@ export class Kernel {
         const errorText = !!err && !!err.stack ? err.stack : err.toString()
         if (errorText.includes('RangeError: Array buffer allocation failed')) {
           const message = 'RangeError: Array buffer allocation failed'
-          Logger.log(message, LOG_ERROR, 'ivm')
+          logger.error(message)
         } else {
           let message = 'program error occurred\n'
           message += `process ${runningProcess.pid}: ${runningProcess.name}\n`
           message += errorText
-          Logger.log(message, LOG_ERROR)
+          logger.error(message)
         }
       }
-      Logger.defaultLogGroup = 'default'
     }
   }
   public sigmoid (x: number): number {
@@ -159,17 +161,17 @@ export class Kernel {
 
     // If the bucket has dropped below the emergency level enable the bucket rebuild functionality.
     if (Game.cpu.bucket <= BUCKET_EMERGENCY) {
-      if (!Memory.qos.last_build_bucket || (Game.time - Memory.qos.last_build_bucket) > BUCKET_BUILD_LIMIT) {
-        Memory.qos.build_bucket = true
-        Memory.qos.last_build_bucket = Game.time
+      if (!Memory.kernel.last_build_bucket || (Game.time - Memory.kernel.last_build_bucket) > BUCKET_BUILD_LIMIT) {
+        Memory.kernel.build_bucket = true
+        Memory.kernel.last_build_bucket = Game.time
         return false
       }
     }
 
     // If the bucket rebuild flag is set don't run anything until the bucket has been reset.
-    if (Memory.qos.build_bucket) {
+    if (Memory.kernel.build_bucket) {
       if (Game.cpu.bucket >= BUCKET_CEILING) {
-        delete Memory.qos.build_bucket
+        delete Memory.kernel.build_bucket
       } else {
         return false
       }
@@ -252,18 +254,18 @@ export class Kernel {
         const limitMB = heap.heap_size_limit >> 20
         message += `, H: ${_.padLeft(heapPercent.toString(), 2)}% ${_.padLeft(`(${sizeMB}/${limitMB}MB)`, 11)}`
       }
-      Logger.log(message, LOG_INFO, 'kernel')
+      logger.info(message)
     } else {
-      Logger.log(`Processes Run: ${completedCount}/${processCount}`, LOG_INFO, 'kernel')
-      Logger.log(`Tick Limit: ${Game.cpu.tickLimit}`, LOG_INFO, 'kernel')
-      Logger.log(`Kernel Limit: ${this.getCpuLimit()}`, LOG_INFO, 'kernel')
-      Logger.log(`CPU Used: ${Game.cpu.getUsed()}`, LOG_INFO, 'kernel')
-      Logger.log(`Bucket: ${Game.cpu.bucket}`, LOG_INFO, 'kernel')
+      logger.info(`Processes Run: ${completedCount}/${processCount}`)
+      logger.info(`Tick Limit: ${Game.cpu.tickLimit}`)
+      logger.info(`Kernel Limit: ${this.getCpuLimit()}`)
+      logger.info(`CPU Used: ${Game.cpu.getUsed()}`)
+      logger.info(`Bucket: ${Game.cpu.bucket}`)
 
       if (IVM && Game.cpu.getHeapStatistics !== undefined) {
         const heap = Game.cpu.getHeapStatistics()
         const heapPercent = Math.round((heap.total_heap_size / heap.heap_size_limit) * 100)
-        Logger.log(`Heap Used: ${heapPercent}% (${heap.total_heap_size} / ${heap.heap_size_limit})`, LOG_INFO, 'kernel')
+        logger.info(`Heap Used: ${heapPercent}% (${heap.total_heap_size} / ${heap.heap_size_limit})`)
       }
     }
 
