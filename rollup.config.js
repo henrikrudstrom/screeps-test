@@ -24,11 +24,12 @@ export default {
   },
 
   plugins: [
-    clear({ targets: ["dist"] }),
     resolve(),
-    json(),
     commonjs(),
+    clear({ targets: ["dist"] }),
+    json(),
     typescript({tsconfig: "./tsconfig.json"}),
     screeps({config: cfg, dryRun: cfg == null})
-  ]
+  ],
+  external: ["lodash"]
 }
