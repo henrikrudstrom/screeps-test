@@ -20,18 +20,25 @@ const IVM = typeof Game.cpu.getHeapStatistics === "function" && Game.cpu.getHeap
 
 const logger = createLogger("kernel")
 
+function initKernelMemory(){
+  return {
+    lastBuildBucket: 0,
+    buildBucket: false,
+    gc: 0
+  }
+}
+
 export class Kernel {
   public static instance: Kernel;
   public scheduler: Scheduler;
   private newglobal: boolean;
   private simulation: boolean;
   //performance: any;
-  private process: typeof Process;
   private _cpuLimit: any;
 
   constructor() {
     if (!Memory.kernel) {
-      Memory.kernel = {};
+      Memory.kernel = initKernelMemory();
     }
     this.scheduler = new Scheduler();
     Kernel.instance = this;
@@ -41,14 +48,13 @@ export class Kernel {
     this.simulation = !!Game.rooms.sim;
     this.scheduler = new Scheduler();
     //this.performance = new Performance()
-    this.process = Process;
   }
 
-  public start(): void {
+  public start(rootProcess: string): void {
     if (IVM) {
-      logger.verbose(`Initializing Kernel for tick ${Game.time} with IVM support`);
+      logger.info(`Initializing Kernel for tick ${Game.time} with IVM support`);
     } else {
-      logger.verbose(`Initializing Kernel for tick ${Game.time}`);
+      logger.info(`Initializing Kernel for tick ${Game.time}`);
     }
 
     // Announce new uploads
@@ -93,12 +99,12 @@ export class Kernel {
     this.scheduler.shift();
 
     if (this.scheduler.getProcessCount() <= 0) {
-      this.scheduler.launchProcess("player");
+      this.scheduler.launchProcess(rootProcess);
     }
   }
 
   public cleanMemory() {
-    logger.verbose("Cleaning memory");
+    logger.trace("Cleaning memory");
     let i;
     for (i in Memory.creeps) {
       // jshint ignore:line
@@ -123,7 +129,7 @@ export class Kernel {
           processName += ' ' + descriptor
         }
 
-        logger.verbose(`Running ${processName} (pid ${runningProcess.pid})`)
+        logger.trace(`Running ${processName} (pid ${runningProcess.pid})`)
         const startCpu = Game.cpu.getUsed()
         runningProcess.run()
         let performanceName = runningProcess.name
@@ -161,17 +167,17 @@ export class Kernel {
 
     // If the bucket has dropped below the emergency level enable the bucket rebuild functionality.
     if (Game.cpu.bucket <= BUCKET_EMERGENCY) {
-      if (!Memory.kernel.last_build_bucket || (Game.time - Memory.kernel.last_build_bucket) > BUCKET_BUILD_LIMIT) {
-        Memory.kernel.build_bucket = true
-        Memory.kernel.last_build_bucket = Game.time
+      if (!Memory.kernel.lastBuildBucket || (Game.time - Memory.kernel.lastBuildBucket) > BUCKET_BUILD_LIMIT) {
+        Memory.kernel.buildBucket = true
+        Memory.kernel.lastBuildBucket = Game.time
         return false
       }
     }
 
     // If the bucket rebuild flag is set don't run anything until the bucket has been reset.
-    if (Memory.kernel.build_bucket) {
+    if (Memory.kernel.buildBucket) {
       if (Game.cpu.bucket >= BUCKET_CEILING) {
-        delete Memory.kernel.build_bucket
+        delete Memory.kernel.buildBucket
       } else {
         return false
       }

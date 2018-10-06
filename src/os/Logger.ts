@@ -1,11 +1,13 @@
-import * as pino from "pino";
+import log from "loglevel"
 
 // function format(info: object) : winston.Format {
 //   return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`
 // }
 
-export function createLogger(moduleName: string, level: string='info') : pino.Logger{
-  return pino();
+export function createLogger(moduleName: string, level: log.LogLevelDesc='INFO') : log.Logger{
+  const logger =  log.getLogger(moduleName);
+  logger.setLevel(level);
+  return logger;
   // return winston.createLogger({
   //   level: level,
   //   format: winston.format.combine(

@@ -1,39 +1,55 @@
+/// <reference path="../types/types.d.ts" />
+import *  as _ from "lodash"
+import { Process, Programs } from "./process";
 const MAX_PRIORITY = 16;
 const MAX_PID = 9999999;
 const WALL = 9;
 
+function initSchedulerMemory() : SchedulerMemory {
+  return {
+    processes: initProcessesMemory(),
+    lastPid: 0
+  }
+}
+
+function initProcessesMemory() : ProcessesMemory {
+  return  {
+    index: {},
+    running: null,
+    completed: [],
+    queues: [],
+    sleep: initSleepingProcessesMemory(),
+    hitwall: false
+  };
+}
+
+function initSleepingProcessesMemory() : SleepingProcessesMemory {
+  return {
+    newProcesses: [],
+    list: [],
+    nextCheck: null
+  }
+}
+
+
+
 export class Scheduler {
   public static DefaultPiority: number = 6;
   public memory: SchedulerMemory;
-  public processCache: any;
+  public processCache: {[pid: number]: Process};
   constructor() {
-    if (!Memory.kernel.scheduler) {
-      Memory.kernel.scheduler = {};
+    if (!Memory.scheduler) {
+      Memory.scheduler = initSchedulerMemory();
     }
-    this.memory = Memory.kernel.scheduler;
+    this.memory = Memory.scheduler;
 
     this.processCache = {};
     if (!this.memory.processes) {
-      this.memory.processes = {
-        index: {},
-        running: null,
-        completed: [],
-        queues: [],
-        sleep: {
-          newProcesses: [],
-          list: [],
-          nextCheck: null
-        },
-        hitwall: false
-      };
+      this.memory.processes = initProcessesMemory();
     } else {
       // For upgrading
       if (!this.memory.processes.sleep) {
-        this.memory.processes.sleep = {
-          newProcesses: [],
-          list: [],
-          nextCheck: null
-        };
+        this.memory.processes.sleep = initSleepingProcessesMemory();
       }
     }
   }
@@ -115,7 +131,7 @@ export class Scheduler {
     // * prevent error prone combinations (such as two really high processes running back to back) from recurring,
     // * keep specific processes from being favored by the scheduler.
     const completed = _.shuffle(_.uniq(this.memory.processes.completed));
-    let pid;
+    let pid: number;
     for (pid of completed) {
       // If process is dead do not merge it back into the queue system.
       if (!this.memory.processes.index[pid]) {
@@ -285,7 +301,7 @@ export class Scheduler {
 
   public getProcessForPid (pid: number) {
     if (!this.processCache[pid]) {
-      const ProgramClass = this.getProgramClass(this.memory.processes.index[pid].n)
+      const ProgramClass = Programs.get(this.memory.processes.index[pid].n)
       this.processCache[pid] = new ProgramClass(pid,
         this.memory.processes.index[pid].n,
         this.memory.processes.index[pid].d,
@@ -294,9 +310,4 @@ export class Scheduler {
     }
     return this.processCache[pid]
   }
-
-  public getProgramClass (program: string) {
-    return require(`programs_${program}`)
-  }
-
 }

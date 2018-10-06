@@ -23,6 +23,8 @@
       "severity": "warning"
     },
     "comment-format": { "severity": "warning"},
-    "object-literal-sort-keys": false
+    "object-literal-sort-keys": false,
+    "no-reference": false,
+    "no-bitwise": false
   }
 }
