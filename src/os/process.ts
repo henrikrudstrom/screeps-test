@@ -1,27 +1,10 @@
-import {Kernel} from "./kernel";
 import {Scheduler} from "./scheduler";
-
-
-export declare type ProcessConstructor = new (pid: number, name: string, data: any, parent: number | null) => Process
-
-export class Programs {
-  private static programs: {[name: string]: ProcessConstructor } = {};
-  public static register(name: string, constructor: ProcessConstructor){
-    if(this.programs[name] !== undefined){
-      throw new Error(`a program is already registred with name ${name}.`);
-    }
-    this.programs[name] = constructor;
-  }
-
-  public static get(name: string) : ProcessConstructor{
-    return this.programs[name];
-  }
-}
 
 export abstract class Process {
   public _priority: number = Scheduler.DefaultPiority;
-  constructor (public pid: number, public name: string, public data: any, public parent: number | null) {
-
+  private _scheduler: Scheduler;
+  constructor (scheduler: Scheduler, public pid: number, public name: string, public data: any, public parent: number | null) {
+    this._scheduler = scheduler;
   }
 
   public getPriority(){
@@ -32,7 +15,7 @@ export abstract class Process {
     if (this.data.children) {
       let label
       for (label in this.data.children) { // jshint ignore:line
-        if (!Kernel.instance.scheduler.isPidActive(this.data.children[label])) {
+        if (!this._scheduler.isPidActive(this.data.children[label])) {
           delete this.data.children[label]
         }
       }
@@ -41,7 +24,7 @@ export abstract class Process {
     if (this.data.processes) {
       let label
       for (label in this.data.processes) { // jshint ignore:line
-        if (!Kernel.instance.scheduler.isPidActive(this.data.processes[label])) {
+        if (!this._scheduler.isPidActive(this.data.processes[label])) {
           delete this.data.processes[label]
         }
       }
@@ -63,7 +46,7 @@ export abstract class Process {
     if (this.data.children[label]) {
       return true
     }
-    this.data.children[label] = Kernel.instance.scheduler.launchProcess(name, data, this.pid)
+    this.data.children[label] = this._scheduler.launchProcess(name, data, this.pid)
     return this.data.children[label]
   }
 
@@ -82,7 +65,7 @@ export abstract class Process {
     if (!pid) {
       return false
     }
-    return Kernel.instance.scheduler.isPidActive(pid)
+    return this._scheduler.isPidActive(pid)
   }
 
   public launchProcess (label: string, name: string, data = {}) {
@@ -93,7 +76,7 @@ export abstract class Process {
     if (this.data.processes[label]) {
       return true
     }
-    this.data.processes[label] = Kernel.instance.scheduler.launchProcess(name, data)
+    this.data.processes[label] = this._scheduler.launchProcess(name, data)
     return this.data.processes[label]
   }
 
@@ -112,7 +95,7 @@ export abstract class Process {
     if (!pid) {
       return false
     }
-    return Kernel.instance.scheduler.isPidActive(pid)
+    return this._scheduler.isPidActive(pid)
   }
 
   // public launchCreepProcess (label: string, role: string, roomname: string, quantity = 1, options = {}) {
@@ -150,12 +133,19 @@ export abstract class Process {
     return false
   }
 
-  public sleep (ticks: number) {
-    Kernel.instance.scheduler.sleep(this.pid, ticks, true)
+  public sleep (ticks: number=Number.MAX_SAFE_INTEGER) {
+    this._scheduler.sleep(this.pid, ticks, true)
   }
 
   public suicide () {
-    return Kernel.instance.scheduler.kill(this.pid)
+    return this._scheduler.kill(this.pid)
+  }
+
+  public wakeParent() {
+    if(this.parent === null) {
+      throw new Error("Process has no parent");
+    }
+    this._scheduler.wake(this.parent);
   }
 
   public run () {

@@ -5,3 +5,10 @@ export function createLogger(moduleName: string, level: log.LogLevelDesc='INFO')
   logger.setLevel(level);
   return logger;
 }
+
+export function setLogLevel(level: log.LogLevelDesc, ...loggers: string[]){
+  loggers.forEach((loggerName) => {
+    log.getLogger(loggerName).setLevel(level)
+  })
+
+}

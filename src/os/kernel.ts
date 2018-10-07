@@ -28,7 +28,6 @@ function initKernelMemory(){
 }
 
 export class Kernel {
-  public static instance: Kernel;
   public scheduler: Scheduler;
   private newglobal: boolean;
   private simulation: boolean;
@@ -40,12 +39,9 @@ export class Kernel {
       Memory.kernel = initKernelMemory();
     }
     this.scheduler = new Scheduler();
-    Kernel.instance = this;
-
 
     this.newglobal = GLOBAL_LAST_RESET === Game.time;
     this.simulation = !!Game.rooms.sim;
-    this.scheduler = new Scheduler();
     //this.performance = new Performance()
   }
 

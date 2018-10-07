@@ -1,6 +1,7 @@
 import { Process } from "./process";
+import { Scheduler } from "./scheduler";
 
-export declare type ProcessConstructor = new (pid: number, name: string, data: any, parent: number | null) => Process;
+export declare type ProcessConstructor = new (scheduler: Scheduler, pid: number, name: string, data: any, parent: number | null) => Process;
 
 export class Programs {
   private static programs: { [name: string]: ProcessConstructor } = {};

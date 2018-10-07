@@ -1,6 +1,7 @@
-/// <reference path="../types/types.d.ts" />
+/// <reference path="./types.d.ts" />
 import *  as _ from "lodash"
-import { Process, Programs } from "./process";
+import { Process } from "./process";
+import { Programs} from "./programs"
 const MAX_PRIORITY = 16;
 const MAX_PID = 9999999;
 const WALL = 9;
@@ -30,8 +31,6 @@ function initSleepingProcessesMemory() : SleepingProcessesMemory {
     nextCheck: null
   }
 }
-
-
 
 export class Scheduler {
   public static DefaultPiority: number = 6;
@@ -65,14 +64,13 @@ export class Scheduler {
       });
       delete this.memory.processes.sleep.newProcesses;
     }
-
     if (this.memory.processes.sleep.nextCheck !== null && this.memory.processes.sleep.nextCheck <= Game.time) {
       let sleepCount = 0;
       // Resume the right processes
-      for (const pid of this.memory.processes.sleep.list) {
+      for (const pid in this.memory.processes.sleep.list) {
         const tick = this.memory.processes.sleep.list[pid];
         if (tick <= Game.time) {
-          this.wake(pid);
+          this.wake(Number(pid));
         } else {
           if (this.memory.processes.sleep.nextCheck <= Game.time || this.memory.processes.sleep.nextCheck > tick) {
             this.memory.processes.sleep.nextCheck = tick;
@@ -240,7 +238,7 @@ export class Scheduler {
     }
   }
 
-  public sleep (pid: number, ticks: number, self = false) {
+  public sleep (pid: number, ticks: number = Number.MAX_SAFE_INTEGER, self = false) {
     if (this.memory.processes.index[pid]) {
       // Remove process from execution queue, but not if the process has called sleeping itself
       if (!self) {
@@ -302,7 +300,7 @@ export class Scheduler {
   public getProcessForPid (pid: number) {
     if (!this.processCache[pid]) {
       const ProgramClass = Programs.get(this.memory.processes.index[pid].n)
-      this.processCache[pid] = new ProgramClass(pid,
+      this.processCache[pid] = new ProgramClass(this, pid,
         this.memory.processes.index[pid].n,
         this.memory.processes.index[pid].d,
         this.memory.processes.index[pid].p
