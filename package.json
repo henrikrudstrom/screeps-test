@@ -14,7 +14,7 @@
     "watch-pserver": "rollup -cw --environment DEST:pserver",
     "watch-sim": "rollup -cw --environment DEST:sim",
     "push-myserver": "rollup -c rollup.myserver.config.js",
-    "test": "mocha -r spec/tshook.js -r tsconfig-paths/register spec/**/*.spec.ts",
+    "test": "mocha -r tshook.js -r tsconfig-paths/register spec/**/*.spec.ts",
     "build-server-test": "rollup -c server-test/rollup.test.config.js",
     "test-server": "node server-test/test.js"
   },

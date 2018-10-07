@@ -5,7 +5,7 @@
     "target": "esnext",
     "moduleResolution": "Node",
     "outDir": "dist",
-    "baseUrl": "../src/",
+    "baseUrl": "./src/",
     "sourceMap": true,
     "strict": true,
     "experimentalDecorators": true,
@@ -13,7 +13,8 @@
     "allowUnreachableCode": false,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-     "typeRoots" : ["../node_modules/@types", "../src/types"]
+    "typeRoots" : ["./node_modules/@types"],
+    "allowJs": true
   },
   "exclude": [
     "node_modules"

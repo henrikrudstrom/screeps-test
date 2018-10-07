@@ -1,3 +1,3 @@
 require("ts-node").register({
-  project: "spec/tsconfig.json"
+  project: "tsconfig.spec.json"
 });

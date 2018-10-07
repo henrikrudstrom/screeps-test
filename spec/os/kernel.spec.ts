@@ -14,6 +14,9 @@ class MockGame {
   public time = 0;
   public cpu = new MockCPU();
   public rooms = {};
+  public getObjectById(id: string){
+    return null;
+  }
 }
 (global as any).Game = new MockGame();
 (global as any).Memory = {};

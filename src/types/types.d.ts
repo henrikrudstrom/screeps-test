@@ -5,41 +5,10 @@
 // }
 // memory extension samples
 
-interface ProcessesMemory {
-  index: {[pid: number]: ProcessMemory};
-  running: null | number;
-  completed: number[];
-  queues: number[][];
-  sleep: SleepingProcessesMemory;
-  hitwall: boolean;
-}
 
-interface SleepingProcessesMemory {
-  newProcesses: number[];
-  list: number[];
-  nextCheck: number | null;
-}
-
-interface SchedulerMemory {
-  processes: ProcessesMemory;
-  lastPid: number;
-}
-
-interface ProcessMemory {
-  n: string
-  d: any;
-  p: number | null;
-}
-
-interface KernelMemory{
-  gc: number
-  lastBuildBucket: number
-  buildBucket: boolean
-}
 
 
 interface CreepMemory {
-  role: string;
   [name: string]: any
 }
 
@@ -48,18 +17,14 @@ interface Memory {
   log: any;
   kernel: KernelMemory
   scheduler: SchedulerMemory
+  entities: { [id: string]: EntityMemory }
 }
 
-interface CreepFactoryMemory {
-  spawnName: string;
-  queue: CreepFactoryOrderMemory[];
-}
+//interface FlagMemory {}
+//interface RoomMemory {}
+// interface SpawnMemory {
+// }
 
-interface CreepFactoryOrderMemory {
-  body: BodyPartConstant[];
-  memory: CreepMemory;
-  clientUUID: string;
-}
 
 type INACTIVE = "inactive";
 type INITIAL_BOOTSTRAP = "initial bootstrap";
