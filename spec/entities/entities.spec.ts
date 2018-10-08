@@ -1,6 +1,6 @@
 /// <reference path="../../src/entities/types.d.ts" />
 import { expect } from "chai";
-import mocha from "mocha";
+import "mocha";
 import { Entities } from "entities/entities";
 import { Entity } from "entities/entity";
 

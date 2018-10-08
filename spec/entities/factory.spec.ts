@@ -1,30 +1,30 @@
 /// <reference path="../../src/entities/types.d.ts" />
 /// <reference path="../../node_modules/@types/screeps/index.d.ts" />
 import { expect } from "chai";
-import mocha from "mocha";
-import * as TypeMoq from "typemoq";
+import  "mocha";
 
+import "../const.js"
 import { initGame } from "../mocks/global";
 import { Entities } from "entities/entities";
-import { MockStructureSpawn } from "../mocks/structure-spawn";
 import { Factory, FactoryClient } from "entities/factory";
-import "../const.js"
 import { Entity } from "entities/entity";
 import { Kernel } from "os/kernel";
 import { Process } from "os/process";
 import { Programs } from "os/programs";
+import { Scheduler } from "os/scheduler";
 
 class TestClient extends Entity implements FactoryClient {
 
-  constructor(public uuid: string, public callback: (() => void) | undefined = undefined){
-    super({uuid: uuid, type: TestClient.name})
+  constructor(memory: EntityMemory, scheduler?: Scheduler){
+    super({uuid: memory.uuid, type: TestClient.name})
+    this.memory = memory;
   }
   public orderCompleted(order: FactoryOrder) : void {
-    if(this.callback) {
-      this.callback()
-    }
+    (this.memory as any).completed = true;
   }
 }
+
+Entities.registerType(TestClient)
 
 class RootProcess extends Process {
   public main(): void {
@@ -55,14 +55,12 @@ class MockSpawn {
   }
 }
 
-
-
 describe("Factory", () => {
   let kernel: Kernel;
   let rootProcess: Process;
   beforeEach(done => {
     initGame();
-    (global as any).Game.getObjectById = function(id: string){
+    (global as any).Game.getObjectById = (id: string) => {
       return new MockSpawn(id, "Spawn1");
     }
     kernel = new Kernel();
@@ -82,7 +80,7 @@ describe("Factory", () => {
   it("should sort orders by priority", () => {
     const id = Factory.create({name: "Spawn1", id: "1234"});
     const factory = Entities.get<Factory>(id);
-    const client = new TestClient("444");
+    const client = new TestClient({uuid: "444", type: 'TestClient'});
     factory.order(client, 1, [], { testData: 1 })
     factory.order(client, 1, [], { testData: 2 })
     factory.order(client, 4, [], { testData: 3 })
@@ -96,10 +94,8 @@ describe("Factory", () => {
     const id = Factory.create({name: "Spawn1", id: "1234"});
     Factory.start(id, rootProcess);
     let factory = Entities.get<Factory>(id);
-    let notified = false;
-    const client = new TestClient("444", () => {
-      notified = true;
-    });
+    const clientId = Entities.create('444', TestClient)
+    let client = Entities.get<TestClient>(clientId);
     factory.order(client, 1, [WORK, MOVE, CARRY]);
     tick();
     factory = Entities.get<Factory>(id);
@@ -111,18 +107,7 @@ describe("Factory", () => {
     tick();
     tick();
     tick();
-    expect(notified).to.eql(true);
+    client = Entities.get<TestClient>(clientId);
+    expect((client.memory as any).completed).to.eql(true);
   })
-
-  // it("should wake up its process if its sleeping", () => {
-  //   const id = Factory.create({name: "Spawn1", id: "1234"});
-  //   const pid = Factory.start(id, rootProcess);
-  //   kernel.scheduler.sleep(pid);
-  //   let factory = Entities.get<Factory>(id);
-  //   const client = new TestClient("444");
-  //   factory.order(client, 1, [WORK, MOVE, CARRY]);
-  //   tick();
-  //   factory = Entities.get<Factory>(id);
-  //   expect(factory.currentOrder).to.eql({priority: 1, clientId: client.uuid, body: [WORK, MOVE, CARRY], memory: null})
-  // })
 });

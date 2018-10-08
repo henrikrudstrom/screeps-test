@@ -25,6 +25,7 @@
     "comment-format": { "severity": "warning"},
     "object-literal-sort-keys": false,
     "no-reference": false,
-    "no-bitwise": false
+    "no-bitwise": false,
+    "prefer-for-of": false
   }
 }

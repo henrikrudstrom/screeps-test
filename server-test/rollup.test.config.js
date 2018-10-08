@@ -6,7 +6,7 @@ import commonjs from "rollup-plugin-commonjs";
 import typescript from "rollup-plugin-typescript2";
 import json from "rollup-plugin-json";
 
-const files = ['simple'];
+const files = ['simple', 'simple2', 'simple3'];
 export default files.map((file) => {
   return {
     input: `server-test/test/${file}.ts`,

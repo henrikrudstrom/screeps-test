@@ -13,4 +13,3 @@ const loop = () => {
 };
 
 exports.loop = loop;
-//# sourceMappingURL=simple.js.map

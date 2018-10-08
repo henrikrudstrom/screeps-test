@@ -3,14 +3,14 @@ import {Entity } from "./entity"
 import _ from "lodash"
 import { Scheduler } from "os/scheduler";
 
-type EntityConstructor = new (memory: EntityMemory, scheduler: Scheduler) => Entity
+type EntityConstructor = new (memory: EntityMemory, scheduler?: Scheduler) => Entity
 
 export class Entities{
   private static _entities: {[id: string]: Entity};
   private static _memory: {[id: string]: EntityMemory}
   private static _constructors: {[id: string]: EntityConstructor } = {}
-  private static _scheduler: Scheduler;
-  public static init(scheduler: Scheduler){
+  private static _scheduler?: Scheduler;
+  public static init(scheduler?: Scheduler){
     this._entities = {};
     if(!Memory.entities) {
       Memory.entities = {};
@@ -23,10 +23,11 @@ export class Entities{
     this._constructors[ctor.name] = ctor;
   }
 
-  public static create<T extends Entity>(uuid: string,  type: EntityConstructor, data: any = {}) : void{
+  public static create<T extends Entity>(uuid: string,  type: EntityConstructor, data: any = {}) : string {
     data.uuid = uuid;
     data.type = type.name;
     this._memory[uuid] = data;
+    return uuid;
   }
 
   public static get<T extends Entity>(uuid: string) : T{
