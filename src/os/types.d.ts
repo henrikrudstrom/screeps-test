@@ -28,4 +28,5 @@ interface KernelMemory{
   gc: number
   lastBuildBucket: number
   buildBucket: boolean
+  rootPid: number;
 }

@@ -1,7 +1,7 @@
 /// <reference path="./types.d.ts" />
 import *  as _ from "lodash"
 import { Process } from "./process";
-import { Programs} from "./programs"
+import { Programs, ProcessConstructor} from "./programs"
 const MAX_PRIORITY = 16;
 const MAX_PID = 9999999;
 const WALL = 9;
@@ -192,10 +192,11 @@ export class Scheduler {
     return false
   }
 
-  public launchProcess (name: string, data: any = {}, parent: number | null = null) : number {
+  public launchProcess (name: string | ProcessConstructor, data: any = {}, parent: number | null = null) : number {
     const pid = this.getNextPid()
+
     this.memory.processes.index[pid] = {
-      n: name,
+      n: typeof name === 'string' ? name : name.name,
       d: data,
       p: parent
     }

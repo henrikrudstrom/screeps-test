@@ -1,4 +1,5 @@
 import {Scheduler} from "./scheduler";
+import { ProcessConstructor } from "./programs";
 
 export abstract class Process {
   public _priority: number = Scheduler.DefaultPiority;
@@ -39,7 +40,7 @@ export abstract class Process {
     return false
   }
 
-  public launchChildProcess (label: string, name: string, data = {}) {
+  public launchChildProcess (label: string, name: string | ProcessConstructor, data = {}) {
     if (!this.data.children) {
       this.data.children = {}
     }
@@ -68,7 +69,7 @@ export abstract class Process {
     return this._scheduler.isPidActive(pid)
   }
 
-  public launchProcess (label: string, name: string, data = {}) {
+  public launchProcess (label: string, name: string | ProcessConstructor, data = {}) {
     if (!this.data.processes) {
       this.data.processes = {}
     }

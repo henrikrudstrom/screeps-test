@@ -40,7 +40,7 @@ export class MockOwnedStructure<T extends StructureConstant = StructureConstant>
 
 
 export class MockStructureSpawn extends MockOwnedStructure<STRUCTURE_SPAWN> implements StructureSpawn {
-  public readonly prototype!: StructureSpawn;
+  public prototype!: StructureSpawn;
 
   public energy: number = 0;
 

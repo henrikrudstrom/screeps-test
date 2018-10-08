@@ -1,32 +1,13 @@
-class MockCPU {
-  public limit = 100;
-  public tickLimit = 500;
-  public bucket = 10000;
-  public getHeapStatistics(): object | undefined{
-    return undefined;
-  }
-  public getUsed(): number {
-    return 10;
-  }
-}
 
-class MockGame {
-  public time = 0;
-  public cpu = new MockCPU();
-  public rooms = {};
-  public getObjectById(id: string){
-    return null;
-  }
-}
-(global as any).Game = new MockGame();
-(global as any).Memory = {};
 
 import { expect } from 'chai';
 import mocha from 'mocha';
+import {initGame} from "../mocks/global";
 import { Kernel } from "os/kernel";
 import { Process } from 'os/process';
 import { Programs} from "os/programs"
 import { setLogLevel } from "os/logger"
+
 
 setLogLevel('warn', 'kernel');
 
@@ -71,23 +52,18 @@ class ChildProcess extends Process {
   }
 }
 
-Programs.register("TestProcess", TestProcess)
-Programs.register("ParentProcess", ParentProcess)
-Programs.register("ChildProcess", ChildProcess)
-Programs.register("SleepyProcess", SleepyProcess)
+Programs.register(TestProcess)
+Programs.register(ParentProcess)
+Programs.register(ChildProcess)
+Programs.register(SleepyProcess)
 
-
-
-function init(){
-  (global as any).Game = new MockGame();
-  (global as any).Memory = { hits: [] };
-}
 
 
 
 describe('Kernel', () => {
   beforeEach((done) => {
-    init();
+    initGame();
+    (Memory as any).hits = [];
     done();
   });
 

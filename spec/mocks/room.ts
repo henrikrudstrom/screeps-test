@@ -10,6 +10,7 @@ export class MockRoom implements Room {
   public name: string;
   public storage?: StructureStorage;
   public terminal?: StructureTerminal;
+  public eventLog!: EventItem[];
 
   constructor(name: string = "W1N1") {
     this.name = name;

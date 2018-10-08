@@ -1,5 +1,6 @@
 import { Scheduler } from "./scheduler";
 import { createLogger } from "os/logger";
+import { Process } from "./process";
 const BUCKET_EMERGENCY = 1000;
 const BUCKET_FLOOR = 2000;
 const BUCKET_CEILING = 9500;
@@ -14,8 +15,7 @@ const RECURRING_BURST = 1.75;
 const RECURRING_BURST_FREQUENCY = 25;
 const MIN_TICKS_BETWEEN_GC = 20;
 const GC_HEAP_TRIGGER = 0.85;
-const GLOBAL_LAST_RESET = Game.time;
-const IVM = typeof Game.cpu.getHeapStatistics === "function" && Game.cpu.getHeapStatistics();
+const GLOBAL_LAST_RESET = (global as any).Game === undefined ? 0 : Game.time;
 
 const logger = createLogger("kernel")
 
@@ -23,7 +23,8 @@ function initKernelMemory(){
   return {
     lastBuildBucket: 0,
     buildBucket: false,
-    gc: 0
+    gc: 0,
+    rootPid: 0
   }
 }
 
@@ -33,8 +34,9 @@ export class Kernel {
   private simulation: boolean;
   //performance: any;
   private _cpuLimit: any;
-
+  public isIVM: boolean;
   constructor() {
+    this.isIVM = typeof Game.cpu.getHeapStatistics === "function" && Game.cpu.getHeapStatistics() !== undefined;
     if (!Memory.kernel) {
       Memory.kernel = initKernelMemory();
     }
@@ -46,7 +48,7 @@ export class Kernel {
   }
 
   public start(rootProcess: string): void {
-    if (IVM) {
+    if (this.isIVM) {
       logger.info(`Initializing Kernel for tick ${Game.time} with IVM support`);
     } else {
       logger.info(`Initializing Kernel for tick ${Game.time}`);
@@ -65,7 +67,7 @@ export class Kernel {
     }
 
     if (
-      IVM &&
+      this.isIVM &&
       global.gc &&
       (!Memory.kernel.gc || Game.time - Memory.kernel.gc >= MIN_TICKS_BETWEEN_GC) &&
       Game.cpu.getHeapStatistics !== undefined
@@ -94,8 +96,12 @@ export class Kernel {
     this.scheduler.shift();
 
     if (this.scheduler.getProcessCount() <= 0) {
-      this.scheduler.launchProcess(rootProcess);
+      Memory.kernel.rootPid = this.scheduler.launchProcess(rootProcess);
     }
+  }
+
+  public getRootProcess() : Process {
+    return this.scheduler.getProcessForPid(Memory.kernel.rootPid);
   }
 
   public cleanMemory() {
@@ -248,7 +254,7 @@ export class Kernel {
       message += `, CPU: ${_.padLeft(Game.cpu.getUsed().toFixed(5), 8)}`
       message += `, B: ${_.padLeft(Game.cpu.bucket.toString(), 5)}`
 
-      if (IVM && Game.cpu.getHeapStatistics !== undefined) {
+      if (this.isIVM && Game.cpu.getHeapStatistics !== undefined) {
         const heap = Game.cpu.getHeapStatistics()
         const heapPercent = Math.round((heap.total_heap_size / heap.heap_size_limit) * 100)
         const sizeMB = heap.total_heap_size >> 20
@@ -263,7 +269,7 @@ export class Kernel {
       logger.info(`CPU Used: ${Game.cpu.getUsed()}`)
       logger.info(`Bucket: ${Game.cpu.bucket}`)
 
-      if (IVM && Game.cpu.getHeapStatistics !== undefined) {
+      if (this.isIVM && Game.cpu.getHeapStatistics !== undefined) {
         const heap = Game.cpu.getHeapStatistics()
         const heapPercent = Math.round((heap.total_heap_size / heap.heap_size_limit) * 100)
         logger.info(`Heap Used: ${heapPercent}% (${heap.total_heap_size} / ${heap.heap_size_limit})`)
