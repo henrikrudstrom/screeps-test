@@ -13,7 +13,6 @@ export class Factory extends Entity {
   public spawn: StructureSpawn
   public queue: FactoryOrder[];
   public memory: FactoryMemory;
-  public currentOrder: FactoryOrder | undefined;
 
   public get energyCapacity(): number { return this.spawn.energyCapacity }
   public get remainingBuildTime(): number { return this.spawn.spawning === null ? 0 : this.spawn.spawning.remainingTime }
@@ -63,19 +62,22 @@ Entities.registerType(Factory);
 class FactoryProcess extends Process {
   public main(): void {
     const factory = Entities.get<Factory>(this.data.uuid);
+    console.log("process at " + Game.time)
+    console.log("remaining build " + factory.remainingBuildTime )
     if(factory.remainingBuildTime > 0){
       this.sleep(factory.remainingBuildTime);
       return;
-    } else if(factory.currentOrder !== undefined) {
-      const client = Entities.get(factory.currentOrder.clientId) as FactoryClient
-      client.orderCompleted(factory.currentOrder);
-      factory.currentOrder = undefined
+    } else if(factory.memory.currentOrder !== undefined) {
+      const client = Entities.get(factory.memory.currentOrder.clientId) as FactoryClient
+      client.orderCompleted(factory.memory.currentOrder);
+      factory.memory.currentOrder = undefined
     }
 
     if(factory.queue.length < 1){
       this.sleep();
       return;
     }
+
     console.log(`building next in queue. (queue length: ${factory.queue.length}) `)
     const nextTask = factory.queue[0];
     if(nextTask === undefined) return;
@@ -84,7 +86,7 @@ class FactoryProcess extends Process {
     if(factory.spawn.spawnCreep(nextTask.body, testName, {dryRun: true}) === OK){
       factory.spawn.spawnCreep(nextTask.body, randomCreepName(), { memory: nextTask.memory });
       console.log("spawned")
-      factory.currentOrder = factory.queue.shift();
+      factory.memory.currentOrder = factory.queue.shift();
     }
     if(factory.spawn.spawning !== null){
       this.sleep(factory.remainingBuildTime)

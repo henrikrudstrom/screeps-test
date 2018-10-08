@@ -103,8 +103,10 @@ describe("Factory", () => {
     factory.order(client, 1, [WORK, MOVE, CARRY]);
     tick();
     factory = Entities.get<Factory>(id);
-    expect(factory.currentOrder).to.eql({priority: 1, clientId: client.uuid, body: [WORK, MOVE, CARRY], memory: null})
+    expect(factory.memory.currentOrder).to.eql({priority: 1, clientId: client.uuid, body: [WORK, MOVE, CARRY], memory: null})
+    expect(factory.remainingBuildTime).to.eql(3);
     tick();
+    expect(factory.remainingBuildTime).to.eql(2);
     tick();
     tick();
     tick();

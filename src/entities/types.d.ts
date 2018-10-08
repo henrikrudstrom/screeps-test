@@ -14,6 +14,7 @@ interface EntityMemory {
 
 interface FactoryMemory extends EntityMemory{
   orders: FactoryOrder[];
+  currentOrder: FactoryOrder | undefined;
   spawnId: string;
   rootPid: number;
 }
