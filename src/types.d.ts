@@ -6,9 +6,14 @@
 // memory extension samples
 
 
-
+interface Pos {
+  x: number;
+  y: number;
+}
 
 interface CreepMemory {
+  role: string;
+  pid: number;
   [name: string]: any
 }
 
@@ -18,6 +23,7 @@ interface Memory {
   kernel: KernelMemory
   scheduler: SchedulerMemory
   entities: { [id: string]: EntityMemory }
+  [name: string]: any;
 }
 
 //interface FlagMemory {}

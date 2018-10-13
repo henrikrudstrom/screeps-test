@@ -3,14 +3,10 @@ const _ = require("lodash");
 (async () => {
     const server = new TestServer();
     try {
-      await server.init('server-test/test/dist/simple.js', simpleWorld);
-      await server.tick(15, async (server) => {
-        console.log("tick " + await server.world.gameTime)
-        const { db } = server.common.storage;
-        const objects = await server.world.roomObjects('W0N1');
-        const creeps = _.find(objects, { type: 'creep' });
-        console.log("creeps:")
-        console.log(creeps);
+      await server.init('dist/main.js', simpleWorld);
+      await server.tick(15, async (world, bot) => {
+        console.log("tick " + await world.gameTime)
+        //console.log(await bot.memory)
       });
     } catch (e) {
       console.log(e)

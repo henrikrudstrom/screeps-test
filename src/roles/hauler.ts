@@ -1,4 +1,12 @@
-export default function tick(creep: Creep) {
+import { Process } from "os/process";
+import { Programs } from "os/programs";
+
+export class HaulerProcess extends Process {
+  public main(): void {
+    const creep = Game.creeps[this.data.creepName];
+    if(creep === undefined){
+      this.suicide();
+    }
     let idle = false;
     if (creep.carry.energy < creep.carryCapacity) {
       // console.log("harvest")
@@ -23,5 +31,7 @@ export default function tick(creep: Creep) {
         creep.moveTo(target);
       }
     }
-    //TODO: report idling
   }
+}
+
+Programs.register(HaulerProcess);

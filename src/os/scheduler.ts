@@ -2,6 +2,7 @@
 import *  as _ from "lodash"
 import { Process } from "./process";
 import { Programs, ProcessConstructor} from "./programs"
+import { createLogger } from "./logger";
 const MAX_PRIORITY = 16;
 const MAX_PID = 9999999;
 const WALL = 9;
@@ -31,6 +32,8 @@ function initSleepingProcessesMemory() : SleepingProcessesMemory {
     nextCheck: null
   }
 }
+
+const logger = createLogger("scheduler");
 
 export class Scheduler {
   public static DefaultPiority: number = 6;
@@ -265,7 +268,9 @@ export class Scheduler {
       // Add process to sleep list or update the tick it should sleep until
       this.memory.processes.sleep.list[pid] = sleepUntil
       // Tell the scheduler when next to check for processes needing to be waked up
-      if (!this.memory.processes.sleep.nextCheck || this.memory.processes.sleep.nextCheck < sleepUntil) {
+      logger.debug(`Sleep check: sleepUntil: ${sleepUntil}, nextCheck: ${this.memory.processes.sleep.nextCheck}`)
+      if (!this.memory.processes.sleep.nextCheck || this.memory.processes.sleep.nextCheck > sleepUntil) {
+        logger.debug(`update nextCheck`);
         this.memory.processes.sleep.nextCheck = sleepUntil
       }
     }

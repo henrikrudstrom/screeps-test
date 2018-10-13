@@ -2,7 +2,7 @@
 /// <reference path="../../node_modules/@types/screeps/index.d.ts" />
 import { expect } from "chai";
 import  "mocha";
-
+import _ from "lodash"
 import "../const.js"
 import { initGame } from "../mocks/global";
 import { Entities } from "entities/entities";
@@ -99,7 +99,7 @@ describe("Factory", () => {
     factory.order(client, 1, [WORK, MOVE, CARRY]);
     tick();
     factory = Entities.get<Factory>(id);
-    expect(factory.memory.currentOrder).to.eql({priority: 1, clientId: client.uuid, body: [WORK, MOVE, CARRY], memory: null})
+    expect(_.omit(factory.memory.currentOrder!, 'creepName')).to.eql({priority: 1, clientId: client.uuid, body: [WORK, MOVE, CARRY], memory: null})
     expect(factory.remainingBuildTime).to.eql(3);
     tick();
     expect(factory.remainingBuildTime).to.eql(2);

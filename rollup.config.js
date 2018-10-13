@@ -31,5 +31,5 @@ export default {
     typescript({tsconfig: "./tsconfig.json"}),
     screeps({config: cfg, dryRun: cfg == null})
   ],
-  external: ["lodash"]
+  external: ["lodash", "os"]
 }

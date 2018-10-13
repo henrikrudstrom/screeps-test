@@ -70,7 +70,7 @@ class TestServer {
     this.bot = await this.server.world.addBot({ username: "bot", room: "W0N1", x: 25, y: 25, modules });
     // Print console logs every tick
     this.bot.on("console", (logs, results, userid, username) => {
-      _.each(logs, line => console.log(`[console|${username}]`, line));
+      _.each(logs, line => console.log(line));
     });
   }
 
@@ -80,7 +80,7 @@ class TestServer {
     }
     for (let i = 0; i < n; i++) {
       await this.server.tick();
-      if (onTick) await onTick(this.server);
+      if (onTick) await onTick(this.server.world, this.bot);
     }
   }
 

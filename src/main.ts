@@ -1,3 +1,12 @@
+import { Programs } from "os/programs";
+import { Process } from "os/process";
+import { Kernel } from "os/kernel";
+import { Entities } from "entities/entities";
+import { Factory } from "entities/factory";
+import { HarvestingSite } from "entities/harvesting-site";
+import { ErrorMapper } from "os/error-mapper";
+import { setLogLevel } from "os/logger";
+
 // import { ErrorMapper } from "utils/ErrorMapper";
 // import { Kernel } from "os/kernel";
 // import { Programs, Process } from "os/process";
@@ -28,19 +37,38 @@
 //   // kernel.shutdown();
 // });
 
+class RootProcess extends Process {
+  public main(): void {
+    if(Memory.done) {
+      return;
+    }
+    if(Entities.find(Factory).length === 0){
+      const uuid = Factory.create(Game.spawns.Spawn1);
+      Factory.start(uuid, this);
+    }
+    const factory = Entities.find(Factory)[0];
 
+    if(Entities.find(HarvestingSite).length === 0){
+      const source = factory.spawn.pos.findClosestByPath(FIND_SOURCES);
+      if(source === null) {
+        throw new Error("no sources found");
+      }
+      const uuid = HarvestingSite.create(source);
+      HarvestingSite.start(uuid, this);
+    }
+    const harvestingSite = Entities.find(HarvestingSite)[0];
 
-Memory.created = false;
-export const loop = () => {
-  console.log("should create: " + Memory.created)
-  if(!Memory.created) {
-    console.log("created creep")
-    Game.spawns.Spawn1.spawnCreep([WORK, MOVE, MOVE], "Mycreep");
+    factory.order(harvestingSite, 1, [MOVE, CARRY, WORK, WORK], {role: 'bootstrap-harvester'});
+    Memory.done = true;
   }
-  Memory.created = true;
-  // console.log(`Current game tick is ${Game.time}`)
-  // const kernel = new Kernel();
-  // kernel.start("test");
-  // kernel.run()
-  // kernel.shutdown();
-};
+}
+
+Programs.register(RootProcess);
+setLogLevel('DEBUG', 'scheduler');
+export const loop = ErrorMapper.wrapLoop(() => {
+  const kernel = new Kernel();
+  kernel.start("RootProcess");
+  Entities.init(kernel.scheduler);
+  kernel.run();
+  kernel.shutdown();
+});

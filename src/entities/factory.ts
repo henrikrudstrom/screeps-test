@@ -4,6 +4,9 @@ import { Process } from "os/process";
 import randomCreepName from "util/creep-name-generator";
 import { Scheduler } from "os/scheduler";
 import { Programs } from "os/programs";
+import { createLogger } from "os/logger";
+
+const logger = createLogger("factory");
 
 export interface FactoryClient extends Entity {
   orderCompleted(order: FactoryOrder): void;
@@ -45,7 +48,8 @@ export class Factory extends Entity {
       clientId: client.uuid,
       priority,
       body,
-      memory
+      memory,
+      creepName: undefined
     };
     for (let i = 0; i < this.queue.length; i++) {
       if (this.queue[i].priority < priority) {
@@ -65,23 +69,25 @@ Entities.registerType(Factory);
 class FactoryProcess extends Process {
   public main(): void {
     const factory = Entities.get<Factory>(this.data.uuid);
-    console.log("process at " + Game.time);
-    console.log("remaining build " + factory.remainingBuildTime);
+    logger.info("Factory awake!!!");
     if (factory.remainingBuildTime > 0) {
+      logger.info(`Still building for ${factory.remainingBuildTime}, going back to sleep.`);
       this.sleep(factory.remainingBuildTime);
       return;
     } else if (factory.memory.currentOrder !== undefined) {
+      logger.info(`Order completed, notifying client, uuid: ${factory.memory.currentOrder.clientId}...`);
       const client = Entities.get(factory.memory.currentOrder.clientId) as FactoryClient;
       client.orderCompleted(factory.memory.currentOrder);
       factory.memory.currentOrder = undefined;
     }
 
     if (factory.queue.length < 1) {
+      logger.info("Nothing in queue, going back to sleep")
       this.sleep();
       return;
     }
 
-    console.log(`building next in queue. (queue length: ${factory.queue.length}) `);
+    logger.info(`building next in queue. (queue length: ${factory.queue.length}) `);
     const nextTask = factory.queue[0];
     if (nextTask === undefined) {
       return;
@@ -89,11 +95,14 @@ class FactoryProcess extends Process {
 
     const testName = "QWEQWQRQWEQWEQWRQWASFASFASF";
     if (factory.spawn.spawnCreep(nextTask.body, testName, { dryRun: true }) === OK) {
-      factory.spawn.spawnCreep(nextTask.body, randomCreepName(), { memory: nextTask.memory });
-      console.log("spawned");
-      factory.memory.currentOrder = factory.queue.shift();
+      const creepName = randomCreepName()
+      factory.spawn.spawnCreep(nextTask.body, creepName, { memory: nextTask.memory });
+      logger.info(`started spawning creep '${creepName}'`)
+      factory.memory.currentOrder = factory.queue.shift() as FactoryOrder;
+      factory.memory.currentOrder.creepName = creepName;
     }
     if (factory.spawn.spawning !== null) {
+      logger.info(`spawing creep, ${factory.remainingBuildTime} ticks remaining, going back to sleep`);
       this.sleep(factory.remainingBuildTime);
     }
   }
