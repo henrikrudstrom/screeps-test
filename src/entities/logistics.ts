@@ -2,6 +2,13 @@ import { Entity } from "./entity";
 import { Scheduler } from "os/scheduler";
 import { FactoryClient } from "./factory";
 
+export interface PickupLocation {
+
+}
+
+export interface DropOffLocation {
+  
+}
 
 export interface ResourceRequestMemory {
   type: Resource,
@@ -63,7 +70,6 @@ interface LogisticsMemory {
   requests: ResourceRequestMemory[];
   latestMatching: { [haulerName: string]: string }
 }
-
 
 export class Logistics extends Entity implements FactoryClient{
 

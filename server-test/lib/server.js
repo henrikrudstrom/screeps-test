@@ -64,8 +64,10 @@ class TestServer {
     await builder(this.server.world);
     const code = fs.readFileSync(codePath, "utf8");
     // Add a bot in W0N1
+    const llcode = fs.readFileSync("./node_modules/loglevel/lib/loglevel.js", "utf8");
     const modules = {
-      main: code
+      main: code,
+      loglevel: llcode
     };
     this.bot = await this.server.world.addBot({ username: "bot", room: "W0N1", x: 25, y: 25, modules });
     // Print console logs every tick

@@ -3,7 +3,7 @@ const _ = require("lodash");
 (async () => {
     const server = new TestServer();
     try {
-      await server.init('dist/main.js', simpleWorld);
+      await server.init('server-test/just-testing.js', simpleWorld);
       await server.tick(15, async (world, bot) => {
         console.log("tick " + await world.gameTime)
         //console.log(await bot.memory)
