@@ -35,6 +35,7 @@ export class Kernel {
   //performance: any;
   private _cpuLimit: any;
   public isIVM: boolean;
+  public static instance: Kernel;
   constructor() {
     this.isIVM = typeof Game.cpu.getHeapStatistics === "function" && Game.cpu.getHeapStatistics() !== undefined;
     if (!Memory.kernel) {
@@ -45,6 +46,8 @@ export class Kernel {
     this.newglobal = GLOBAL_LAST_RESET === Game.time;
     this.simulation = !!Game.rooms.sim;
     //this.performance = new Performance()
+
+    Kernel.instance = this;
   }
 
   public start(rootProcess: string): void {

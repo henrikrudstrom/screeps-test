@@ -7,15 +7,15 @@ import "../const.js"
 import { initGame } from "../mocks/global";
 import { Entities } from "entities/entities";
 import { Factory, FactoryClient } from "entities/factory";
-import { Entity } from "entities/entity";
+import { Entity, EntityBase } from "entities/entity";
 import { Kernel } from "os/kernel";
 import { Process } from "os/process";
 import { Programs } from "os/programs";
 import { Scheduler } from "os/scheduler";
 
-class TestClient extends Entity implements FactoryClient {
+class TestClient extends EntityBase implements FactoryClient {
 
-  constructor(memory: EntityMemory, scheduler?: Scheduler){
+  constructor(memory: EntityMemory){
     super({uuid: memory.uuid, type: TestClient.name})
     this.memory = memory;
   }
@@ -71,7 +71,7 @@ describe("Factory", () => {
   function tick(){
     (Game as any).tick();
     kernel.start("RootProcess");
-    Entities.init(kernel.scheduler);
+    Entities.init();
     rootProcess = kernel.getRootProcess();
     kernel.run();
     kernel.shutdown();

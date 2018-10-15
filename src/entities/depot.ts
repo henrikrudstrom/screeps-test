@@ -1,22 +1,23 @@
 import { Entity } from "./entity";
 
-
-export abstract class Depot extends Entity {
-    public abstract get position(): RoomPosition;
-    public predictedAmount(resource: Resource, time: number): number {
-
-    }
-    public predictedCapacity(resource: Resource, time: number): number {
-
-    }
-
-
+export enum ResourceLocationType {
+  Dropped, Structure
 }
 
-export class DroppedEnergyDepot extends Depot {
-
+export interface ResourceLocation extends Entity{
+  location: RoomPosition;
+  targets: RoomPosition[];
+  type: ResourceLocationType[];
+  requiredRange: number;
 }
-
-export class ContainerDepot extends Depot {
-
-}
+//
+// export interface PickupLocation extends StorageLocation{
+//   //predictedAmount(resource: Resource, time: number): number;
+//   //deliver(creep: Creep, amount: number) : boolean;
+//
+// }
+//
+// export interface DropOffLocation extends StorageLocation {
+//   //predictedCapacity(resource: Resource, time: number) : number;
+//   //pickup(creep: Creep, amount: number): boolean;
+// }

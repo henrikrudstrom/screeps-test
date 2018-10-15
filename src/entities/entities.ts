@@ -3,20 +3,18 @@ import {Entity } from "./entity"
 import _ from "lodash"
 import { Scheduler } from "os/scheduler";
 
-type EntityConstructor<T extends Entity> = new (memory: EntityMemory, scheduler?: Scheduler) => T
+type EntityConstructor<T extends Entity> = new (memory: EntityMemory) => T
 
 export class Entities{
   private static _entities: {[id: string]: Entity};
   private static _memory: {[id: string]: EntityMemory}
   private static _constructors: {[id: string]: EntityConstructor<Entity> } = {}
-  private static _scheduler?: Scheduler;
-  public static init(scheduler?: Scheduler){
+  public static init(){
     this._entities = {};
     if(!Memory.entities) {
       Memory.entities = {};
     }
     this._memory = Memory.entities;
-    this._scheduler = scheduler;
   }
 
   public static registerType<T extends Entity>(ctor: EntityConstructor<T>): void{
@@ -25,7 +23,7 @@ export class Entities{
 
   public static create<T extends Entity>(uuid: string,  type: EntityConstructor<T>, data: any = {}) : string {
     data.uuid = uuid;
-    data.type = type.name;
+    data.entityType = type.name;
     this._memory[uuid] = data;
     return uuid;
   }
@@ -36,18 +34,18 @@ export class Entities{
       if(!mem) {
         throw new Error(`No entity with id '${uuid}' was found.`);
       }
-      const ctor = this._constructors[mem.type];
+      const ctor = this._constructors[mem.entityType];
       if(!ctor){
-        throw new Error(`No constructor for type '${mem.type} was found.`);
+        throw new Error(`No constructor for type '${mem.entityType} was found.`);
       }
-      this._entities[uuid] = new ctor(mem, this._scheduler);
+      this._entities[uuid] = new ctor(mem);
     }
     return this._entities[uuid] as T;
   }
 
   public static find<T extends Entity>(type: EntityConstructor<T>) : T[]{
     return _.values<EntityMemory>(this._memory)
-      .filter((mem) => mem.type === type.name)
+      .filter((mem) => mem.entityType === type.name)
       .map((mem) => this.get<T>(mem.uuid))
   }
 }

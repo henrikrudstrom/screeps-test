@@ -1,11 +1,15 @@
 import {Scheduler} from "os/scheduler";
 
-export class Entity {
-  public uuid: string;
-  public type: string;
-  constructor(public memory: EntityMemory, protected scheduler?: Scheduler | undefined){
-    this.uuid = memory.uuid;
-    this.type = memory.type;
-  }
+export interface Entity{
+  uuid: string;
+  entityType: string;
+}
 
+export class EntityBase {
+  public uuid: string;
+  public entityType: string;
+  constructor(public memory: EntityMemory){
+    this.uuid = memory.uuid;
+    this.entityType = memory.entityType;
+  }
 }

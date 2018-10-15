@@ -1,4 +1,4 @@
-import { Entity } from "./entity";
+import { Entity, EntityBase } from "./entity";
 import { Entities } from "./entities";
 import { Process } from "os/process";
 import randomCreepName from "util/creep-name-generator";
@@ -12,7 +12,7 @@ export interface FactoryClient extends Entity {
   orderCompleted(order: FactoryOrder): void;
 }
 
-export class Factory extends Entity {
+export class Factory extends EntityBase {
   public spawn: StructureSpawn;
   public queue: FactoryOrder[];
   public memory: FactoryMemory;
@@ -36,8 +36,8 @@ export class Factory extends Entity {
     return pid;
   }
 
-  constructor(memory: EntityMemory, scheduler?: Scheduler) {
-    super(memory, scheduler);
+  constructor(memory: EntityMemory) {
+    super(memory);
     this.memory = memory as FactoryMemory;
     this.spawn = Game.getObjectById(this.memory.spawnId) as StructureSpawn;
     this.queue = this.memory.orders;
@@ -58,8 +58,8 @@ export class Factory extends Entity {
       }
     }
     this.queue.push(order);
-    if (this.scheduler !== undefined) {
-      this.scheduler.wake(this.memory.rootPid);
+    if (Scheduler.instance !== undefined) {
+      Scheduler.instance.wake(this.memory.rootPid);
     }
   }
 }

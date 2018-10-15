@@ -9,7 +9,7 @@ interface FactoryOrder {
 
 interface EntityMemory {
   uuid: string;
-  type: string;
+  entityType: string;
   //[name: string]: any
 }
 

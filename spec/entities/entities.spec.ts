@@ -2,7 +2,7 @@
 import { expect } from "chai";
 import "mocha";
 import { Entities } from "entities/entities";
-import { Entity } from "entities/entity";
+import { Entity, EntityBase } from "entities/entity";
 
 (global as any).Memory = {};
 
@@ -10,7 +10,7 @@ interface TestEntityMemory extends EntityMemory {
   additionalProp: string;
 }
 
-class TestEntity extends Entity {
+class TestEntity extends EntityBase {
   public additionalProp: string;
   public memory: TestEntityMemory;
   constructor(memory: EntityMemory) {
@@ -20,7 +20,7 @@ class TestEntity extends Entity {
   }
 }
 
-class AnotherEntityType extends Entity {
+class AnotherEntityType extends EntityBase {
 
 }
 

@@ -2,7 +2,7 @@
 // import { Factory } from "./factory";
 // import { Logistics } from "./logistics";
 // import * as calculate from "util/creep-calculate";
-import { Entity } from "./entity";
+import { Entity, EntityBase } from "./entity";
 import { Scheduler } from "os/scheduler";
 import { Process } from "os/process";
 import { FactoryClient, Factory } from "./factory";
@@ -14,7 +14,7 @@ import { createLogger } from "os/logger";
 
 const logger = createLogger("harvesting-site");
 
-export class HarvestingSite extends Entity implements FactoryClient {
+export class HarvestingSite extends EntityBase implements FactoryClient {
   public source: Source | null;
   public memory: HarvestingSiteMemory;
 
@@ -39,11 +39,13 @@ export class HarvestingSite extends Entity implements FactoryClient {
     return pid;
   }
 
-  public constructor(memory: EntityMemory, scheduler?: Scheduler) {
-    super(memory, scheduler);
+  public constructor(memory: EntityMemory) {
+    super(memory);
     this.memory = memory as HarvestingSiteMemory;
     this.source = Game.getObjectById(this.memory.sourceId);
   }
+
+
 
   public orderCompleted(order: FactoryOrder): void {
     if(order.creepName !== undefined){

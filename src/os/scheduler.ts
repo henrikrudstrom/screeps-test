@@ -39,6 +39,8 @@ export class Scheduler {
   public static DefaultPiority: number = 6;
   public memory: SchedulerMemory;
   public processCache: {[pid: number]: Process};
+  public static instance: Scheduler;
+
   constructor() {
     if (!Memory.scheduler) {
       Memory.scheduler = initSchedulerMemory();
@@ -54,6 +56,7 @@ export class Scheduler {
         this.memory.processes.sleep = initSleepingProcessesMemory();
       }
     }
+    Scheduler.instance = this;
   }
 
   public wakeSleepingProcesses() {
