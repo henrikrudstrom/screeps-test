@@ -1,8 +1,8 @@
 /// <reference path="./types.d.ts" />
 import *  as _ from "lodash"
-import { Process } from "./process";
-import { Programs, ProcessConstructor} from "./programs"
-import { createLogger } from "./logger";
+import { Process } from "os/process";
+import { Programs, ProcessConstructor} from "os/programs"
+import { createLogger } from "os/logger";
 const MAX_PRIORITY = 16;
 const MAX_PID = 9999999;
 const WALL = 9;

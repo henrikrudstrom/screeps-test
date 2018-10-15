@@ -68,7 +68,7 @@ setLogLevel('DEBUG', 'scheduler');
 export const loop = ErrorMapper.wrapLoop(() => {
   const kernel = new Kernel();
   kernel.start("RootProcess");
-  Entities.init(kernel.scheduler);
+  Entities.init();
   kernel.run();
   kernel.shutdown();
 });

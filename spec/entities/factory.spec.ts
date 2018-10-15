@@ -16,7 +16,7 @@ import { Scheduler } from "os/scheduler";
 class TestClient extends EntityBase implements FactoryClient {
 
   constructor(memory: EntityMemory){
-    super({uuid: memory.uuid, type: TestClient.name})
+    super({uuid: memory.uuid, entityType: TestClient.name})
     this.memory = memory;
   }
   public orderCompleted(order: FactoryOrder) : void {
@@ -80,7 +80,7 @@ describe("Factory", () => {
   it("should sort orders by priority", () => {
     const id = Factory.create({name: "Spawn1", id: "1234"});
     const factory = Entities.get<Factory>(id);
-    const client = new TestClient({uuid: "444", type: 'TestClient'});
+    const client = new TestClient({uuid: "444", entityType: 'TestClient'});
     factory.order(client, 1, [], { testData: 1 })
     factory.order(client, 1, [], { testData: 2 })
     factory.order(client, 4, [], { testData: 3 })

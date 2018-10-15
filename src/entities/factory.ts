@@ -1,5 +1,5 @@
-import { Entity, EntityBase } from "./entity";
-import { Entities } from "./entities";
+import { Entity, EntityBase } from "entities/entity";
+import { Entities } from "entities/entities";
 import { Process } from "os/process";
 import randomCreepName from "util/creep-name-generator";
 import { Scheduler } from "os/scheduler";

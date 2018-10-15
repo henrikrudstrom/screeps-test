@@ -1,5 +1,5 @@
-import {Scheduler} from "./scheduler";
-import { ProcessConstructor } from "./programs";
+import {Scheduler} from "os/scheduler";
+import { ProcessConstructor } from "os/programs";
 
 export abstract class Process {
   public _priority: number = Scheduler.DefaultPiority;

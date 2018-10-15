@@ -1,6 +1,6 @@
-import { Scheduler } from "./scheduler";
+import { Scheduler } from "os/scheduler";
 import { createLogger } from "os/logger";
-import { Process } from "./process";
+import { Process } from "os/process";
 const BUCKET_EMERGENCY = 1000;
 const BUCKET_FLOOR = 2000;
 const BUCKET_CEILING = 9500;

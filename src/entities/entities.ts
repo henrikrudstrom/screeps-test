@@ -1,5 +1,5 @@
 /// <reference path="./types.d.ts" />
-import {Entity } from "./entity"
+import {Entity } from "entities/entity"
 import _ from "lodash"
 import { Scheduler } from "os/scheduler";
 

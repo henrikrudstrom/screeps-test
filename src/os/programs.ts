@@ -1,5 +1,5 @@
-import { Process } from "./process";
-import { Scheduler } from "./scheduler";
+import { Process } from "os/process";
+import { Scheduler } from "os/scheduler";
 
 export declare type ProcessConstructor = new (scheduler: Scheduler, pid: number, name: string, data: any, parent: number | null) => Process;
 

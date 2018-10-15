@@ -1,6 +1,6 @@
-import { Entity } from "./entity";
+import { Entity } from "entities/entity";
 import { Scheduler } from "os/scheduler";
-import { FactoryClient } from "./factory";
+import { FactoryClient } from "entities/factory";
 
 
 export interface ResourceRequestMemory {

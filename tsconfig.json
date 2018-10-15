@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "lib": ["esnext"],
-    "target": "esnext",
+    "target": "es6",
     "moduleResolution": "Node",
     "outDir": "dist",
     "baseUrl": "src/",
@@ -11,7 +11,9 @@
     "experimentalDecorators": true,
     "noImplicitReturns": true,
     "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false
+    "allowUnreachableCode": false,
+    "esModuleInterop": true
+
   },
   "exclude": [
     "node_modules"

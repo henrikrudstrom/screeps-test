@@ -2,11 +2,11 @@
 // import { Factory } from "./factory";
 // import { Logistics } from "./logistics";
 // import * as calculate from "util/creep-calculate";
-import { Entity, EntityBase } from "./entity";
+import { Entity, EntityBase } from "entities/entity";
 import { Scheduler } from "os/scheduler";
 import { Process } from "os/process";
-import { FactoryClient, Factory } from "./factory";
-import { Entities } from "./entities";
+import { FactoryClient, Factory } from "entities/factory";
+import { Entities } from "entities/entities";
 import { HarvesterProcess } from "roles/harvester";
 import { BootstrapHarvesterProcess } from "roles/bootstrap-harvester";
 import { Programs } from "os/programs";
