@@ -2,7 +2,7 @@ var dependencyTree = require('dependency-tree');
 
 // Returns a dependency tree object for the given file
 var tree = dependencyTree.toList({
-  filename: 'dist/src/spec/entities/factory.spec.js',
+  filename: 'dist/src/main',
   directory: 'dist/src',
   nodeModulesConfig: {
     entry: 'module'
