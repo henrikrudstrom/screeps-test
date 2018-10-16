@@ -6,9 +6,7 @@ export enum ResourceLocationType {
 
 export interface ResourceLocation extends Entity{
   location: RoomPosition;
-  targets: RoomPosition[];
-  type: ResourceLocationType[];
-  requiredRange: number;
+  structureId: string | null;
 }
 //
 // export interface PickupLocation extends StorageLocation{

@@ -3,26 +3,16 @@ import { Programs } from "os/programs";
 import { ResourceLocation } from "entities/depot";
 import { Entities } from "entities/entities";
 
-export class Hauler {
-
-
-
-}
-
 enum TaskState {
-  Pickup, Deliver
+  Pickup, Deliver, Completed, Cancelled, Aborted
 }
 
 interface HaulerTaskMemory {
-  type: Resource,
+  resourceType: ResourceConstant,
   amount: number,
   pickupEntity: string,
   deliverEntity: string,
   state: TaskState
-}
-
-interface HaulerMemory {
-
 }
 
 export class HaulerProcess extends Process {
@@ -32,57 +22,49 @@ export class HaulerProcess extends Process {
       this.suicide();
     }
     const task = creep.memory.task as HaulerTaskMemory;
-    const pickup = Entities.get<ResourceLocation>(task.pickupEntity);
+    if(task.state === TaskState.Aborted || task.state === TaskState.Cancelled || task.state === TaskState.Completed){
+      creep.memory.task === null;
+      return;
+    }
+
     if(creep.memory.state === TaskState.Pickup){
-      if(!creep.pos.inRangeTo(pickup.location, pickup.requiredRange)) {
+      const pickup = Entities.get<ResourceLocation>(task.pickupEntity);
+      if(!creep.pos.inRangeTo(pickup.location, 1)) {
         creep.moveTo(pickup.location);
       }
       else {
-        //find pickup dropped energy first otherwise pick up the largest amount first.
-      }
+        if(pickup.structureId === null){
+          const energy = creep.room.lookAt(pickup.location).filter(obj => obj.type === 'resource' && obj.resource!.resourceType === task.resourceType)[0];
+          if(energy === undefined) {
+            //TODO either wait for energy or cancel task
+            return;
+          }
+          creep.pickup(energy.resource!)
 
+        } else {
+          const structure = Game.getObjectById(pickup.structureId) as Structure
+          creep.withdraw(structure, task.resourceType, task.amount)
+        }
+        task.state = TaskState.Deliver;
+      }
+    } else {
+      const deliverTo = Entities.get<ResourceLocation>(task.deliverEntity);
+      if(!creep.pos.inRangeTo(deliverTo.location, 1)) {
+        creep.moveTo(deliverTo.location);
+      }
+      else {
+        if(deliverTo.structureId === null){
+          creep.drop(task.resourceType);
+        } else {
+          const structure = Game.getObjectById(deliverTo.structureId) as Structure
+          creep.transfer(structure, task.resourceType, task.amount)
+        }
+        task.state = TaskState.Completed;
+        creep.memory.task = null;
+      }
     }
   }
 
 }
-
-
-//
-//
-//
-//
-//
-// export class HaulerProcess extends Process {
-//   public main(): void {
-//     const creep = Game.creeps[this.data.creepName];
-//     if(creep === undefined){
-//       this.suicide();
-//     }
-//     let idle = false;
-//     if (creep.carry.energy < creep.carryCapacity) {
-//       // console.log("harvest")
-//       const target = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
-//       if(target === null){
-//         idle = true;
-//         return;
-//       }
-//       const result = creep.pickup(target);
-//       if (result === ERR_NOT_IN_RANGE) {
-//         creep.moveTo(target);
-//       } else if(result === OK && creep.carry.energy < creep.carryCapacity){
-//         idle = true;
-//       }
-//     } else {
-//       const target = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
-//       if(target === null) {
-//         throw new Error("No spawn found, cannot haul");
-//       }
-//       const result = creep.transfer(target, RESOURCE_ENERGY);
-//       if (result === ERR_NOT_IN_RANGE) {
-//         creep.moveTo(target);
-//       }
-//     }
-//   }
-// }
 
 Programs.register(HaulerProcess);
