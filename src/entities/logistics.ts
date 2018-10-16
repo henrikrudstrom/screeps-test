@@ -1,7 +1,8 @@
-import { Entity, EntityBase } from 'entities/entity';
-import { Scheduler } from 'os/scheduler';
-import { FactoryClient } from 'entities/factory';
-import { generatePreferenceLists } from 'util/stable-marriage';
+import { Entity, EntityBase } from "entities/entity";
+import { Scheduler } from "os/scheduler";
+import { FactoryClient } from "entities/factory";
+import { generatePreferenceLists } from "util/stable-marriage";
+import { Entities } from "./entities";
 
 export interface ResourceLocation extends Entity {
   location: RoomPosition;
@@ -34,10 +35,13 @@ export interface HaulerTask {
   pickupTime: number;
   deliverTime: number;
 }
-
+export enum RequestType {
+  Supply, Demand
+}
 export interface ResourceRequest {
   id: string;
   resourceType: ResourceConstant;
+  requestType: RequestType;
   amount: number;
   priority: number;
   requesterId: string;
@@ -60,7 +64,6 @@ function totalDistance(positions: Position[]): number {
   return sum;
 }
 
-
 interface LogisticsMemory extends EntityMemory {
   haulers: string[];
   requests: { [id: string]: ResourceRequest };
@@ -68,26 +71,65 @@ interface LogisticsMemory extends EntityMemory {
   nextRequestId: number;
 }
 
-
-function timeToMove(creep: Creep, from: RoomPosition, to: RoomPosition) : number {
+function timeToMove(creep: Creep, from: RoomPosition, to: RoomPosition): number {
   return 1;
 }
 
-function selectBuffer(hauler: Creep, request: ResourceRequest, buffers: ResourceBuffer[]){
+function selectBuffer(hauler: Creep, request: ResourceRequest, buffers: ResourceBuffer[]) {
   buffers.forEach(buf => {
-    if(!buf.canProvide(request.resourceType)) return;
-  })
+    if (!buf.canProvide(request.resourceType)) return;
+  });
 }
 
-function createRankingFunction(buffers: ResourceBuffer[]){
-  return function rank(hauler: Creep, request: ResourceRequest): number {
+function traversalTime(creep: Creep, pathcost: number) : number{
+  return 1;
+}
 
+function createRankingFunction(buffers: ResourceBuffer[]) {
+  return function rank(hauler: Creep, request: ResourceRequest): number {};
+}
+type MatchElement = [string, string, string];
+type MatchingSolution = MatchElement[];
 
+export class LogisticsMatching {
+  public haulers: { [name: string]: Creep };
+  public requests: { [id: string]: ResourceRequest };
+  public buffers: { [id: string]: ResourceBuffer };
+
+  public bestSolution: MatchingSolution;
+
+  public generateNewPermutations(newCreep: string[], newDemand: string[], newSupply: string[]): MatchingSolution[] {
+    return [[["1", "2", "3"]]];
+  }
+
+  public rateSolution(solution: MatchingSolution) {}
+
+  public rate(elem: MatchElement) {
+    const [creepName, reqId, bufId] = elem;
+    const hauler = this.haulers[creepName];
+    let haulerPos = hauler.pos;
+    let availableFrom = Game.time;
+    if(hauler.memory.task !== undefined){
+      const task = hauler.memory.task as HaulerTask;
+      haulerPos = Entities.get<ResourceLocation>(task.deliverEntity).location;
+      availableFrom = Game.time + task.deliverTime;
+    }
+    const request = this.requests[reqId];
+    const reqPos = Entities.get<ResourceLocation>(request.requesterId).location;
+    const buffer = this.buffers[bufId];
+
+    let travelTime: number;
+    if(request.requestType === RequestType.Demand){
+      travelTime = traversalTime(hauler, PathFinder.search(hauler.pos, buffer.location).cost);
+      travelTime += traversalTime(hauler, PathFinder.search(buffer.location, reqPos).cost);
+    } else {
+      travelTime = traversalTime(hauler, PathFinder.search(hauler.pos, reqPos).cost);
+      travelTime += traversalTime(hauler, PathFinder.search(reqPos, buffer.location).cost);
+    }
+    const carry = Math.min(hauler.carryCapacity, buffer.estimatedAmount(request.resourceType, availableFrom + travelTime), request.amount);
+    return carry / travelTime;
   }
 }
-
-
-
 
 export class Logistics extends EntityBase implements FactoryClient {
   private memory: LogisticsMemory;
@@ -108,8 +150,6 @@ export class Logistics extends EntityBase implements FactoryClient {
       priority
     };
   }
-
-
 
   public updateMatching() {
     const creeps = this.memory.haulers.map(name => Game.creeps[name]);
