@@ -13,7 +13,7 @@ async function suite(description, filename, cb) {
       console.log("init")
       await build(server.server.world)
       console.log("buildt")
-      await run(server.server.world, server.bot, server.run)
+      await run(server.server.world, server.bot, server.run.bind(server))
       console.log("done")
     }
 

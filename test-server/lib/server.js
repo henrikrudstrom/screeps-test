@@ -87,6 +87,8 @@ class TestServer {
     );
     modules["main"] = fs.readFileSync("dist/test-server/main.js", "utf8");
     modules["test-process"] = fs.readFileSync(filename, "utf8");
+    console.log("modules:")
+    console.log(_.keys(modules));
     this.modules = modules;
   }
   async init() {
@@ -123,6 +125,10 @@ class TestServer {
     for (let i = 0; i < n; i++) {
       await this.server.tick();
       if (onTick) await onTick();
+      const mem = JSON.parse(await this.bot.memory);
+      if(mem.__testrun !== undefined && mem.__testrun.done === true){
+          return;
+      }
     }
   }
 
