@@ -2,9 +2,10 @@ import { Kernel } from "os/kernel";
 import { Entities } from "entities/entities";
 import { Process } from "os/process";
 import { Programs } from "os/programs";
+import { setLogLevel } from "os/logger";
+setLogLevel('WARN', 'kernel', 'scheduler')
 try {
   const testFunction = require("./test-process").testFunction;
-
   class TestProcess extends Process {
     public main(): void {
       if(Memory.__testrun === undefined){

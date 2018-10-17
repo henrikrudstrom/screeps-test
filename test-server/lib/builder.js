@@ -1,9 +1,9 @@
 const { TerrainMatrix } = require('screeps-server-mockup');
-
+const _ = require('lodash');
 function builder(server) {
-  const world = server.world;
+  const world = server.server.world;
   this.createCreep = async function(room, x, y, name, body) {
-    if (!this.bot) {
+    if (!server.bot) {
       throw new Error('need to create a spawn before creating creeps');
     }
     body = body.map(part => ({ type: part, hits: 100 }));
@@ -12,8 +12,8 @@ function builder(server) {
       body: body,
       energy: 0,
       energyCapacity: 0,
-      user: server.bot.id(),
-      hits: body.sum(part => part.hits),
+      user: server.bot.id,
+      hits: _.reduce(body.map(p => p.hits), (num, sum) => num + sum),
       hitsMax: 300,
       spawning: false,
       fatigue: 0,
@@ -52,16 +52,30 @@ function builder(server) {
   this.createRoom = async function(name) {
     await world.addRoom(name);
   };
+  const terrain = new TerrainMatrix();
   this.setTerrain = async function(room, data) {
-    const terrain = new TerrainMatrix();
     data.forEach(d => {
       terrain.set(d[0], d[1], d[2]);
     });
-    await world.setTerrain(room, terrain);
   };
 
+  this.setTerrainArea = function(room, range, type) {
+    for (let x = range[0]; x <= range[2]; x++) {
+      for (let y = range[1]; y <= range[3]; y++) {
+        let t = type;
+        if (type === 'random') {
+          t = Math.random() > 0.5 ? 'plain' : 'swamp';
+        }
+        terrain.set(x, y, t);
+      }
+    }
+
+  };
+  this.applyTerrain = async function(room){
+    await world.setTerrain(room, terrain);
+  }
   this.createSpawn = async function(room, x, y) {
-    server.bot = await this.server.world.addBot({ x, y, room, username: 'bot', modules: this.modules });
+    server.bot = await world.addBot({ x, y, room, username: 'bot', modules: server.modules });
     server.bot.on('console', (logs, results, userid, username) => {
       _.each(logs, line => console.log(line));
     });
