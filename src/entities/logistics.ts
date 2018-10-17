@@ -9,6 +9,8 @@ export interface ResourceLocation extends Entity {
   structureId: string | null;
   incomingHauls(): HaulerTask[];
   outgoingHauls(): HaulerTask[];
+  storedResources(resourceType: ResourceConstant) : number;
+  miningRate(resourceType: ResourceConstant): number;
 }
 
 export interface ResourceBuffer extends ResourceLocation {
@@ -36,7 +38,8 @@ export interface HaulerTask {
   deliverTime: number;
 }
 export enum RequestType {
-  Supply, Demand
+  Supply,
+  Demand
 }
 export interface ResourceRequest {
   id: string;
@@ -81,16 +84,21 @@ function selectBuffer(hauler: Creep, request: ResourceRequest, buffers: Resource
   });
 }
 
-function traversalTime(creep: Creep, pathcost: number) : number{
+function traversalTime(creep: Creep, pathcost: number): number {
   return 1;
 }
 
 function createRankingFunction(buffers: ResourceBuffer[]) {
   return function rank(hauler: Creep, request: ResourceRequest): number {};
 }
+
 type MatchElement = [string, string, string];
 type MatchingSolution = MatchElement[];
-
+interface BufferUsage {
+  time: number;
+  amount: number;
+  resourceType: ResourceConstant;
+}
 export class LogisticsMatching {
   public haulers: { [name: string]: Creep };
   public requests: { [id: string]: ResourceRequest };
@@ -102,14 +110,17 @@ export class LogisticsMatching {
     return [[["1", "2", "3"]]];
   }
 
-  public rateSolution(solution: MatchingSolution) {}
+  public rateSolution(solution: MatchingSolution) {
+    const bufferUsage: { [id: string]: BufferUsage[] } = {};
+    const travelTime: number[] = solution.map(elem => this.calculateTiming(elem, bufferUsage));
+  }
 
-  public rate(elem: MatchElement) {
+  public calculateTiming(elem: MatchElement, bufferUsage: { [id: string]: BufferUsage[] }) {
     const [creepName, reqId, bufId] = elem;
     const hauler = this.haulers[creepName];
     let haulerPos = hauler.pos;
     let availableFrom = Game.time;
-    if(hauler.memory.task !== undefined){
+    if (hauler.memory.task !== undefined) {
       const task = hauler.memory.task as HaulerTask;
       haulerPos = Entities.get<ResourceLocation>(task.deliverEntity).location;
       availableFrom = Game.time + task.deliverTime;
@@ -119,16 +130,53 @@ export class LogisticsMatching {
     const buffer = this.buffers[bufId];
 
     let travelTime: number;
-    if(request.requestType === RequestType.Demand){
-      travelTime = traversalTime(hauler, PathFinder.search(hauler.pos, buffer.location).cost);
-      travelTime += traversalTime(hauler, PathFinder.search(buffer.location, reqPos).cost);
+    let bufferTravelTime: number;
+    let amount = Math.min(hauler.carryCapacity, request.amount);
+
+    if (request.requestType === RequestType.Demand) {
+      bufferTravelTime = traversalTime(hauler, PathFinder.search(hauler.pos, buffer.location).cost);
+      travelTime = bufferTravelTime + traversalTime(hauler, PathFinder.search(buffer.location, reqPos).cost);
+      amount *= -1;
     } else {
       travelTime = traversalTime(hauler, PathFinder.search(hauler.pos, reqPos).cost);
       travelTime += traversalTime(hauler, PathFinder.search(reqPos, buffer.location).cost);
+      bufferTravelTime = travelTime;
     }
-    const carry = Math.min(hauler.carryCapacity, buffer.estimatedAmount(request.resourceType, availableFrom + travelTime), request.amount);
-    return carry / travelTime;
+
+    if (bufferUsage[bufId] === undefined) {
+      bufferUsage[bufId] = [];
+    }
+    bufferUsage[bufId].push({
+      time: availableFrom + bufferTravelTime,
+      amount,
+      resourceType: request.resourceType
+    });
+
+    return travelTime;
   }
+
+  public timeUntilResourcesAvailable(
+    buffer: ResourceBuffer,
+    usages: BufferUsage[],
+    arrivalTime: number,
+    amount: number,
+    resourceType: ResourceConstant
+  ) {
+    const totalUsage = usages.concat(
+      buffer.incomingHauls()
+        .map(task => ({ time: task.deliverTime, amount: task.amount, resourceType: task.resourceType })),
+      buffer.outgoingHauls()
+        .map(task => ({ time: task.deliverTime, amount: task.amount * -1, resourceType: task.resourceType }))
+      ).filter(usage => usage.resourceType === resourceType)
+      .sort((a, b) => a.time - b.time);
+    const resourcesAtArrival = buffer.storedResources(resourceType) + buffer.miningRate(resourceType) + _.sum(totalUsage.filter(usage => usage.time <= arrivalTime), usage.amount)
+  }
+
+  public calculateTransportRate(
+    elem: MatchElement,
+    travelTime: number,
+    bufferUsage: { [id: string]: { [id: string]: BufferUsage } }
+  ) {}
 }
 
 export class Logistics extends EntityBase implements FactoryClient {
